@@ -13,28 +13,25 @@
       "src": "chatbot-ui/package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "chatbot-ui/dist"
+        "distDir": "dist"
       }
     }
   ],
   "routes": [
     {
-      "src": "/widget\\.js",
+      "src": "^/widget\\.js$",
       "dest": "chatbot-ui/public/widget.js"
     },
-
     {
-      "src": "/api/(.*)",
+      "src": "^/api/(.*)$",
       "dest": "api/main.py"
     },
-
     {
-      "src": "/embed",
+      "src": "^/embed$",
       "dest": "chatbot-ui/dist/index.html"
     },
-
     {
-      "src": "/(?!api|widget\\.js)(.*)",
+      "src": "^/(?!(api|widget\\.js)).*$",
       "dest": "chatbot-ui/dist/index.html"
     }
   ]
