@@ -2,7 +2,8 @@
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.config import settings
+from sqlalchemy import create_engine
+from app.config import settings, DATABASE_URL
 from app.database import engine, Base
 from app.routers.clients import router as clients_router
 from app.routers.chat    import router as chat_router
@@ -30,6 +31,11 @@ app.include_router(leads_router,   prefix="/api/leads")
 
 @app.on_event("startup")
 async def startup_event():
-    # create all missing tables (clients, leads, etc.) in your Postgres DB
+    # 1) Synchronous table creation using psycopg2
+    sync_url = DATABASE_URL.replace("+asyncpg", "")
+    sync_engine = create_engine(sync_url, echo=False)
+    Base.metadata.create_all(bind=sync_engine)
+
+    # 2) Async ensure tables exist (no-op if already created)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
