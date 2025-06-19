@@ -1,11 +1,13 @@
 # api/main.py
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
+from app.database import engine, Base
+from app.routers.clients import router as clients_router
 from app.routers.chat    import router as chat_router
 from app.routers.flights import router as flights_router
 from app.routers.leads   import router as leads_router
-from app.routers.clients import router as clients_router
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -28,6 +30,6 @@ app.include_router(leads_router,   prefix="/api/leads")
 
 @app.on_event("startup")
 async def startup_event():
-    from app.database import Base, engine
+    # create all missing tables (clients, leads, etc.) in your Postgres DB
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
