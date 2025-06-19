@@ -2,11 +2,11 @@
 
 import os
 from pydantic_settings import BaseSettings
-from pydantic import AnyHttpUrl, EmailStr, Field
+from pydantic import AnyHttpUrl, EmailStr
 from typing import List, Optional
 
 class Settings(BaseSettings):
-    # Core
+    # Core application settings
     APP_NAME: str = "Vacation Vista Chatbot"
     DEBUG: bool = False
     CORS_ORIGINS: List[str] = ["*"]
@@ -25,34 +25,24 @@ class Settings(BaseSettings):
     pinecone_environment: Optional[str]= None
     pinecone_index: Optional[str]      = None
 
-    # Read the database URL from DATABASE_URL (won’t error if missing)
-    SQLALCHEMY_DATABASE_URI: Optional[str] = Field(
-        None,
-        env="DATABASE_URL"
-    )
-
     class Config:
         env_file = ".env"
         case_sensitive = True
 
-    @property
-    def GEMINI_MODEL_URL(self) -> str:
-        if not self.GEMINI_API_KEY:
-            raise ValueError("GEMINI_API_KEY is not set")
-        return (
-            f"https://generativelanguage.googleapis.com/v1beta/models/"
-            f"gemini-2.0-flash:generateContent?key={self.GEMINI_API_KEY}"
-        )
-
-# Instantiate settings
+# Instantiate base settings
 settings = Settings()
 
-# Debug: print out what DATABASE_URL was loaded
-print("🌐 Loaded DATABASE_URL:", settings.SQLALCHEMY_DATABASE_URI)
+# Resolve DATABASE_URL (Postgres) or fall back to scratch SQLite
+_db_url = os.getenv("DATABASE_URL") or os.getenv("SQLALCHEMY_DATABASE_URI")
+if _db_url:
+    # Ensure asyncpg driver if using Postgres
+    if _db_url.startswith("postgresql://") and "+asyncpg" not in _db_url:
+        _db_url = _db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    print(f"🌐 Using DATABASE_URL: {_db_url}")
+else:
+    # Writable scratch space (ephemeral) for serverless
+    _db_url = "sqlite+aiosqlite:////tmp/chatbot.db"
+    print(f"⚠️ No DATABASE_URL found—falling back to: {_db_url}")
 
-# Now enforce at runtime that the DB URL is present
-if not settings.SQLALCHEMY_DATABASE_URI:
-    raise RuntimeError(
-        "Missing DATABASE_URL environment variable—"
-        "please set your Postgres connection string as DATABASE_URL."
-    )
+# Final DB connection string
+DATABASE_URL = _db_url
