@@ -15,7 +15,7 @@ class ClientIn(BaseModel):
     domain: str
     branding: dict
 
-@router.post("/api/clients", status_code=201)
+@router.post("/", status_code=201)
 async def create_client(
     data: ClientIn,
     db: AsyncSession = Depends(get_db)
@@ -32,7 +32,7 @@ async def create_client(
     await db.commit()
     return {"client_id": cid}
 
-@router.get("/api/clients/{cid}")
+@router.get("/{cid}")
 async def get_client(
     cid: str,
     db: AsyncSession = Depends(get_db)
