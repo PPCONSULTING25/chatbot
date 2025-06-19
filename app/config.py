@@ -1,17 +1,16 @@
 # app/config.py
 
 import os
+from urllib.parse import urlparse, urlunparse, parse_qsl, urlencode
 from pydantic_settings import BaseSettings
-from pydantic import AnyHttpUrl, EmailStr
+from pydantic import EmailStr
 from typing import List, Optional
 
 class Settings(BaseSettings):
-    # Core application settings
     APP_NAME: str = "Vacation Vista Chatbot"
     DEBUG: bool = False
     CORS_ORIGINS: List[str] = ["*"]
 
-    # Optional service keys until you wire them up
     DUFFEL_API_KEY: Optional[str]      = None
     GEMINI_API_KEY: Optional[str]      = None
 
@@ -32,17 +31,35 @@ class Settings(BaseSettings):
 # Instantiate base settings
 settings = Settings()
 
-# Resolve DATABASE_URL (Postgres) or fall back to scratch SQLite
-_db_url = os.getenv("DATABASE_URL") or os.getenv("SQLALCHEMY_DATABASE_URI")
-if _db_url:
-    # Ensure asyncpg driver if using Postgres
-    if _db_url.startswith("postgresql://") and "+asyncpg" not in _db_url:
-        _db_url = _db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
-    print(f"🌐 Using DATABASE_URL: {_db_url}")
-else:
-    # Writable scratch space (ephemeral) for serverless
-    _db_url = "sqlite+aiosqlite:////tmp/chatbot.db"
-    print(f"⚠️ No DATABASE_URL found—falling back to: {_db_url}")
+# Resolve the raw URL from env
+raw_url = os.getenv("DATABASE_URL") or os.getenv("SQLALCHEMY_DATABASE_URI")
+if not raw_url:
+    raise RuntimeError(
+        "Missing DATABASE_URL—set your Postgres connection string as DATABASE_URL"
+    )
+
+# Parse and strip sslmode, then ensure asyncpg scheme
+parsed = urlparse(raw_url)
+# Filter out sslmode query param
+query_params = [(k, v) for k, v in parse_qsl(parsed.query) if k.lower() != 'sslmode']
+new_query = urlencode(query_params)
+
+# Rebuild URL with new query
+scheme = parsed.scheme
+if scheme.startswith('postgresql') and '+asyncpg' not in scheme:
+    scheme = scheme.replace('postgresql', 'postgresql+asyncpg', 1)
+
+clean_url = urlunparse((
+    scheme,
+    parsed.netloc,
+    parsed.path,
+    parsed.params,
+    new_query,
+    parsed.fragment
+))
+
+print(f"🌐 Using cleaned DATABASE_URL: {clean_url}")
 
 # Final DB connection string
-DATABASE_URL = _db_url
+DATABASE_URL = clean_url
+
