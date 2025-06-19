@@ -1,5 +1,6 @@
 # app/config.py
 
+import os
 from pydantic_settings import BaseSettings
 from pydantic import AnyHttpUrl, EmailStr, Field
 from typing import List, Optional
@@ -10,7 +11,7 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     CORS_ORIGINS: List[str] = ["*"]
 
-    # Service keys (made optional until you need each feature)
+    # Optional service keys until you wire them up
     DUFFEL_API_KEY: Optional[str]      = None
     GEMINI_API_KEY: Optional[str]      = None
 
@@ -24,11 +25,13 @@ class Settings(BaseSettings):
     pinecone_environment: Optional[str]= None
     pinecone_index: Optional[str]      = None
 
-    # Database: required, sourced from DATABASE_URL
-    SQLALCHEMY_DATABASE_URI: str = Field(..., env="DATABASE_URL")
+    # Read the database URL from DATABASE_URL (won’t error if missing)
+    SQLALCHEMY_DATABASE_URI: Optional[str] = Field(
+        None,
+        env="DATABASE_URL"
+    )
 
     class Config:
-        # load any `.env` in your repo root for local dev
         env_file = ".env"
         case_sensitive = True
 
@@ -41,5 +44,12 @@ class Settings(BaseSettings):
             f"gemini-2.0-flash:generateContent?key={self.GEMINI_API_KEY}"
         )
 
-# Instantiate, validating DATABASE_URL is present
+# Instantiate settings (no Pydantic ValidationError on import)
 settings = Settings()
+
+# Now enforce at runtime that the DB URL is present
+if not settings.SQLALCHEMY_DATABASE_URI:
+    raise RuntimeError(
+        "Missing DATABASE_URL environment variable—"
+        "please set your Postgres connection string as DATABASE_URL."
+    )
