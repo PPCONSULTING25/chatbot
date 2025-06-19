@@ -1,11 +1,13 @@
+# app/models.py
+
 from pydantic import BaseModel
 from typing import Optional, List, Dict
-from sqlalchemy import Column, String, DateTime
-from sqlalchemy.dialects.postgresql import UUID
 from datetime import datetime
 import uuid
-from .database import Base
+
 from sqlalchemy import Column, Integer, String, JSON, DateTime, func
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
+
 from .database import Base
 
 # --- Pydantic Models ---
@@ -36,25 +38,29 @@ class FlightOffer(BaseModel):
     departure_time: str
     arrival_time: str
 
-# --- SQLAlchemy Model ---
+# --- SQLAlchemy Models ---
 
 class Lead(Base):
     __tablename__ = "leads"
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    name = Column(String, nullable=False)
-    phone = Column(String, nullable=False)
-    email = Column(String, nullable=False, index=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
 
+    id = Column(
+        PGUUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4
+    )
+    name       = Column(String, nullable=False)
+    phone      = Column(String, nullable=False)
+    email      = Column(String, nullable=False, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
 
 class Client(Base):
     __tablename__ = "clients"
 
-    id = Column(Integer, primary_key=True, index=True)
-    client_id = Column(String, unique=True, index=True, nullable=False)
-    name      = Column(String, nullable=False)
-    domain    = Column(String, nullable=False)
-    branding  = Column(JSON, nullable=True)
+    id         = Column(Integer, primary_key=True, index=True)
+    client_id  = Column(String, unique=True, index=True, nullable=False)
+    name       = Column(String, nullable=False)
+    domain     = Column(String, nullable=False)
+    branding   = Column(JSON, nullable=True)
     created_at = Column(
         DateTime(timezone=True),
         server_default=func.now(),
