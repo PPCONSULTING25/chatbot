@@ -10,3 +10,4 @@ httpx
 duffel-api
 email-validator
 python-dotenv
+asyncpg
