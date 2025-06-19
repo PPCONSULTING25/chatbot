@@ -2,12 +2,8 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/main.py",
+      "src": "api/**/*.py",
       "use": "@vercel/python"
-    },
-    {
-      "src": "chatbot-ui/public/widget.js",
-      "use": "@vercel/static"
     },
     {
       "src": "chatbot-ui/package.json",
@@ -15,24 +11,19 @@
       "config": {
         "distDir": "dist"
       }
+    },
+    {
+      "src": "chatbot-ui/public/widget.js",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
-    {
-      "src": "^/widget\\.js$",
-      "dest": "chatbot-ui/public/widget.js"
-    },
-    {
-      "src": "^/api/(.*)$",
-      "dest": "api/main.py"
-    },
-    {
-      "src": "^/embed$",
-      "dest": "chatbot-ui/dist/index.html"
-    },
-    {
-      "src": "^/(?!(api|widget\\.js)).*$",
-      "dest": "chatbot-ui/dist/index.html"
-    }
+    { "src": "^/api(?:/.*)?$",     "dest": "/api/main.py" },
+
+    { "src": "^/widget\\.js$",     "dest": "chatbot-ui/public/widget.js" },
+
+    { "handle": "filesystem" },
+
+    { "src": "/.*",                "dest": "chatbot-ui/dist/index.html" }
   ]
 }
