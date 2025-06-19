@@ -34,7 +34,7 @@
 
   // Create the iframe but keep it hidden
   const iframe = document.createElement('iframe');
-  iframe.src = `${window.location.origin}/?embed=1&client_id=${clientId}`;
+  iframe.src = `${window.location.origin}/embed?client_id=${clientId}`;
   iframe.style.cssText = [
     'position:fixed',
     'bottom:96px',
