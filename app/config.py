@@ -44,8 +44,11 @@ class Settings(BaseSettings):
             f"gemini-2.0-flash:generateContent?key={self.GEMINI_API_KEY}"
         )
 
-# Instantiate settings (no Pydantic ValidationError on import)
+# Instantiate settings
 settings = Settings()
+
+# Debug: print out what DATABASE_URL was loaded
+print("🌐 Loaded DATABASE_URL:", settings.SQLALCHEMY_DATABASE_URI)
 
 # Now enforce at runtime that the DB URL is present
 if not settings.SQLALCHEMY_DATABASE_URI:
