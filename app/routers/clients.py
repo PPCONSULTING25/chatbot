@@ -1,54 +1,31 @@
-# app/routers/clients.py
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security.api_key import APIKey
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import insert, select
-from pydantic import BaseModel
-import uuid, traceback
+from sqlalchemy import select
 
+from app.auth import get_master_key
 from app.database import get_db
+from app.schemas import ClientCreate, ClientOut
 from app.models import Client
 
-router = APIRouter(tags=["clients"])
+router = APIRouter(prefix="/v1/clients", tags=["clients"])
 
-class ClientIn(BaseModel):
-    name: str
-    domain: str
-    branding: dict
-
-@router.post("", status_code=201)
+@router.post("", response_model=ClientOut)
 async def create_client(
-    data: ClientIn,
+    payload: ClientCreate,
+    _: APIKey = Depends(get_master_key),
     db: AsyncSession = Depends(get_db)
 ):
-    try:
-        cid = uuid.uuid4().hex[:8]
-        await db.execute(
-            insert(Client).values(
-                client_id=cid,
-                name=data.name,
-                domain=data.domain,
-                branding=data.branding
-            )
-        )
-        await db.commit()
-        return {"client_id": cid}
+    client = Client(**payload.dict())
+    db.add(client)
+    await db.commit()
+    await db.refresh(client)
+    return client
 
-    except Exception:
-        print("🛑 Exception in create_client:")
-        traceback.print_exc()
-        # re-raise so FastAPI still returns a 500
-        raise
-
-@router.get("/{cid}")
-async def get_client(
-    cid: str,
-    db: AsyncSession = Depends(get_db)
-):
-    result = await db.execute(
-        select(Client.client_id, Client.branding)
-        .where(Client.client_id == cid)
-    )
-    client = result.first()
+@router.get("/{client_id}", response_model=ClientOut)
+async def get_client(client_id: str, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Client).where(Client.client_id == client_id))
+    client = result.scalars().first()
     if not client:
         raise HTTPException(status_code=404, detail="Client not found")
-    return {"client_id": client.client_id, "branding": client.branding}
+    return client

@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import ChatInterface from './ChatInterface';
 
 export default function App() {
+  const apiBase = import.meta.env.VITE_API_URL || '';
   const params   = new URLSearchParams(window.location.search);
   const isEmbed  = params.get('embed') === '1';
   const clientId = params.get('client_id');
@@ -14,7 +15,7 @@ export default function App() {
   // In embed mode, fetch branding from your API
   useEffect(() => {
     if (!isEmbed || !clientId) return;
-    fetch(`${import.meta.env.VITE_API_URL}/api/clients/${clientId}`)
+    fetch(`${apiBase}/api/clients/${clientId}`)
       .then(r => r.json())
       .then(data => data.branding && setBrand(data.branding))
       .catch(console.error);
@@ -40,6 +41,7 @@ export default function App() {
         {open && (
           <div className="fixed bottom-20 right-6 w-80 h-[500px] bg-white rounded-xl shadow-2xl flex flex-col overflow-hidden z-50">
             <ChatInterface
+            
               siteId={import.meta.env.VITE_SITE_ID}
               mode={mode}
               branding={branding}

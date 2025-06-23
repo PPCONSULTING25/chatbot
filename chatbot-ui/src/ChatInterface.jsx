@@ -3,7 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import FlightCard from './FlightCard';
 
-export default function ChatInterface({ siteId, mode, onModeChange, onClose }) {
+export default function ChatInterface({ apiBase = '',siteId, mode, onModeChange, onClose }) {
   // Onboarding: 1=name, 2=phone, 3=email, 4=chat
   const [step, setStep] = useState(1);
   const [name, setName] = useState('');
@@ -72,7 +72,7 @@ export default function ChatInterface({ siteId, mode, onModeChange, onClose }) {
 
       // SEND LEAD TO BACKEND!
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/leads`, {
+        const res = await fetch(`${apiBase}/api/leads`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name, phone, email: text })
@@ -122,7 +122,7 @@ export default function ChatInterface({ siteId, mode, onModeChange, onClose }) {
     } else {
       try {
         const res = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/chat`,
+          `${apiBase}/api/chat`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -162,7 +162,7 @@ export default function ChatInterface({ siteId, mode, onModeChange, onClose }) {
     }
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/flights/search`,
+        `${apiBase}/api/flights/search`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

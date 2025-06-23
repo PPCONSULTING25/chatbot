@@ -1,5 +1,3 @@
-# app/services/duffel_client.py
-
 import httpx
 from app.config import settings
 
@@ -15,18 +13,18 @@ class DuffelClient:
             timeout=30,
         )
 
-    async def create_offer_request(self, slices: list, passengers: list) -> list:
-        resp = await self.client.post(
-            f"{self.base_url}/air/offer_requests",
-            json={
-                "data": {
-                    "slices": slices,
-                    "passengers": passengers
-                }
-            },
-        )
+    async def search_offers(self, origin, destination, depart_date, return_date, adults):
+        req = {
+            "data": {
+                "slices": [{"origin": origin, "destination": destination, "departure_date": depart_date}],
+                "passengers": [{"type": "adult", "quantity": adults}],
+            }
+        }
+        if return_date:
+            req["data"]["slices"].append({"origin": destination, "destination": origin, "departure_date": return_date})
+
+        resp = await self.client.post(f"{self.base_url}/air/offer_requests", json=req)
         resp.raise_for_status()
         return resp.json()["data"]["offers"]
 
-# single shared instance
 duffel_client = DuffelClient()

@@ -1,68 +1,28 @@
-# app/models.py
-
-from pydantic import BaseModel
-from typing import Optional, List, Dict
-from datetime import datetime
 import uuid
-
-from sqlalchemy import Column, Integer, String, JSON, DateTime, func
+from sqlalchemy import Column, String, Integer, Text, DateTime, func, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
-
-from .database import Base
-
-# --- Pydantic Models ---
-
-class ChatRequest(BaseModel):
-    session_id: str
-    site_id: str
-    message: str
-    history: List[Dict[str, str]] = []
-
-class ChatResponse(BaseModel):
-    session_id: str
-    reply: str
-
-class FlightSearchRequest(BaseModel):
-    origin: str
-    destination: str
-    departure_date: str
-    return_date: Optional[str] = None
-    adults: int
-
-class FlightOffer(BaseModel):
-    id: str
-    total_amount: str
-    currency: str
-    departure_airport: str
-    arrival_airport: str
-    departure_time: str
-    arrival_time: str
-
-# --- SQLAlchemy Models ---
-
-class Lead(Base):
-    __tablename__ = "leads"
-
-    id = Column(
-        PGUUID(as_uuid=True),
-        primary_key=True,
-        default=uuid.uuid4
-    )
-    name       = Column(String, nullable=False)
-    phone      = Column(String, nullable=False)
-    email      = Column(String, nullable=False, index=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+from sqlalchemy.orm import relationship
+from app.database import Base
 
 class Client(Base):
     __tablename__ = "clients"
 
     id         = Column(Integer, primary_key=True, index=True)
-    client_id  = Column(String, unique=True, index=True, nullable=False)
+    client_id  = Column(String, unique=True, index=True, default=lambda: uuid.uuid4().hex[:8])
+    api_key    = Column(String, unique=True, default=lambda: uuid.uuid4().hex)
     name       = Column(String, nullable=False)
     domain     = Column(String, nullable=False)
-    branding   = Column(JSON, nullable=True)
-    created_at = Column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        nullable=False
-    )
+    branding   = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    leads      = relationship("Lead", back_populates="client")
+
+class Lead(Base):
+    __tablename__ = "leads"
+
+    id         = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name       = Column(String, nullable=False)
+    phone      = Column(String, nullable=False)
+    email      = Column(String, nullable=False, index=True)
+    client_id  = Column(Integer, ForeignKey("clients.id"))
+    client     = relationship("Client", back_populates="leads")
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
