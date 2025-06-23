@@ -1,23 +1,29 @@
-from pydantic import BaseModel, EmailStr
-from typing import Optional, List
+# app/schemas.py
+from pydantic import BaseModel, EmailStr, AnyUrl
+from typing import Optional, List, Dict
 from uuid import UUID
+
+class Branding(BaseModel):
+    welcomeMessage: str
+    logoUrl: Optional[AnyUrl] = None
+    colors: Optional[Dict[str, str]] = None
 
 # Clients
 class ClientCreate(BaseModel):
     name: str
     domain: str
-    branding: str
+    branding: Branding       # ← now expects a Branding object :contentReference[oaicite:1]{index=1}
 
 class ClientOut(BaseModel):
     client_id: str
     api_key: str
     name: str
     domain: str
-    branding: str
+    branding: Branding       # ← outputs the structured branding
 
 class ClientConfig(BaseModel):
     client_id: str
-    branding: str
+    branding: Branding
 
 # Leads
 class LeadCreate(BaseModel):
@@ -49,7 +55,6 @@ class FlightOffer(BaseModel):
 
 # Chat
 class ChatRequest(BaseModel):
-    site_id: str
     session_id: str
     message: str
 

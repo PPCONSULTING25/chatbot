@@ -1,6 +1,7 @@
+# app/models.py
 import uuid
-from sqlalchemy import Column, String, Integer, Text, DateTime, func, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID as PGUUID
+from sqlalchemy import Column, String, Integer, DateTime, func, ForeignKey
+from sqlalchemy.dialects.postgresql import UUID as PGUUID, JSONB
 from sqlalchemy.orm import relationship
 from app.database import Base
 
@@ -12,7 +13,7 @@ class Client(Base):
     api_key    = Column(String, unique=True, default=lambda: uuid.uuid4().hex)
     name       = Column(String, nullable=False)
     domain     = Column(String, nullable=False)
-    branding   = Column(Text, nullable=True)
+    branding   = Column(JSONB, nullable=False)  # ← switched from Text to JSONB :contentReference[oaicite:0]{index=0}
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     leads      = relationship("Lead", back_populates="client")
 

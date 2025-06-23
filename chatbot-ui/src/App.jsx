@@ -1,27 +1,30 @@
-// src/App.jsx
+// File: src/App.jsx
 import React, { useState, useEffect } from 'react';
 import ChatInterface from './ChatInterface';
 
 export default function App() {
-  const apiBase = import.meta.env.VITE_API_URL || '';
-  const params   = new URLSearchParams(window.location.search);
-  const isEmbed  = params.get('embed') === '1';
-  const clientId = params.get('client_id');
+  const embedConfig = window.ChatbotConfig || {};
+  const apiBase = embedConfig.apiUrl || import.meta.env.VITE_API_URL || '';
+  const apiKey = embedConfig.apiKey || import.meta.env.VITE_API_KEY || '';
+  const params = new URLSearchParams(window.location.search);
+  const isEmbed = Boolean(embedConfig.clientId) || params.get('embed') === '1';
+  const clientId = embedConfig.clientId || params.get('client_id') || import.meta.env.VITE_SITE_ID;
 
-  const [open, setOpen]     = useState(isEmbed);
-  const [mode, setMode]     = useState('chat');
-  const [branding, setBrand] = useState(null);
+  const [open, setOpen] = useState(isEmbed);
+  const [mode, setMode] = useState('chat');
+  const [branding, setBrand] = useState(embedConfig.theme || null);
 
-  // In embed mode, fetch branding from your API
   useEffect(() => {
-    if (!isEmbed || !clientId) return;
-    fetch(`${apiBase}/api/clients/${clientId}`)
-      .then(r => r.json())
-      .then(data => data.branding && setBrand(data.branding))
-      .catch(console.error);
-  }, [isEmbed, clientId]);
+    if (!embedConfig.theme && clientId) {
+      fetch(`${apiBase}/v1/clients/${clientId}`, {
+        headers: { 'X-API-KEY': apiKey }
+      })
+        .then(res => res.json())
+        .then(data => data.branding && setBrand(data.branding))
+        .catch(console.error);
+    }
+  }, [embedConfig.theme, apiBase, apiKey, clientId]);
 
-  // Non-embed demo: floating buttons
   if (!isEmbed) {
     return (
       <>
@@ -41,8 +44,9 @@ export default function App() {
         {open && (
           <div className="fixed bottom-20 right-6 w-80 h-[500px] bg-white rounded-xl shadow-2xl flex flex-col overflow-hidden z-50">
             <ChatInterface
-            
-              siteId={import.meta.env.VITE_SITE_ID}
+              apiBase={apiBase}
+              apiKey={apiKey}
+              siteId={clientId}
               mode={mode}
               branding={branding}
               onModeChange={setMode}
@@ -54,21 +58,19 @@ export default function App() {
     );
   }
 
-  // --- Embed mode / inside iframe ---
   if (!clientId) {
     return <div className="p-4 text-red-600">Error: no client_id provided</div>;
   }
   return (
     <div id="embed-container" className="w-full h-full">
       <ChatInterface
+        apiBase={apiBase}
+        apiKey={apiKey}
         siteId={clientId}
         mode={mode}
         branding={branding}
         onModeChange={setMode}
-        onClose={() => {
-          // iframe parent handles closing
-          window.parent.postMessage({ action: 'close_chat' }, '*');
-        }}
+        onClose={() => window.parent.postMessage({ action: 'close_chat' }, '*')}
       />
     </div>
   );
