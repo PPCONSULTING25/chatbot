@@ -1,8 +1,59 @@
-# Python
-app/__pycache__/
+# ─── Python ────────────────────────────────────────────────────────────────
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
 venv/
-# Node
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# SQLite database (if you don’t want to check this in)
+chatbot.db
+
+# Flask instance folder (if you have one)
+instance/
+
+# Pytest / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# dotenv
+.env
+*.env
+
+# ─── Node (chatbot-ui) ──────────────────────────────────────────────────────
 chatbot-ui/node_modules/
 chatbot-ui/dist/
-# Env files
-*.env
+chatbot-ui/build/
+chatbot-ui/.cache/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ─── IDEs / Editors ─────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*~ 
+
+# macOS
+.DS_Store
